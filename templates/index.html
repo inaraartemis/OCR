@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extractor de Imágenes - Arpita Mahapatra</title>
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            /* Violet */
+            --primary-hover: #7c3aed;
+            --bg: #fdf2f8;
+            /* Pink tint background */
+            --card-bg: #fff;
+            --text: #1f2937;
+            --text-muted: #6b7280;
+            --border: #f3e8ff;
+            --accent: #ec4899;
+            /* Pink accent */
+        }
+
+        body {
+            font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #fff1f2 0%, #ece9fe 100%);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 4rem 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.03em;
+            text-shadow: 0 20px 40px rgba(236, 72, 153, 0.15);
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            font-weight: 400;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        @media (min-width: 900px) {
+            .grid {
+                grid-template-columns: 0.8fr 1.2fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 2rem;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(243, 232, 255, 0.8);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 30px 60px -12px rgba(139, 92, 246, 0.15), 0 0 0 1px rgba(216, 180, 254, 0.4);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: #374151;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .upload-area {
+            border: 2px dashed #d8b4fe;
+            background-color: #faf5ff;
+            border-radius: 1.5rem;
+            padding: 4rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+            background-color: #fdf2f8;
+            transform: scale(1.02);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: #e0e7ff;
+            transform: scale(1.04);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1.5rem;
+            width: 100%;
+            box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px -5px rgba(139, 92, 246, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Secondary Action Buttons (Copy, Download) */
+        .action-btn {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 0.5rem 0.8rem;
+            border-radius: 0.6rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .action-btn:hover {
+            background: #f8fafc;
+            color: var(--primary);
+            border-color: #d8b4fe;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .output-container {
+            position: relative;
+        }
+
+        .output-actions {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        pre {
+            background: #1e1e1e;
+            /* Dark theme code block */
+            color: #e2e8f0;
+            padding: 3rem 1.5rem 1.5rem 1.5rem;
+            /* Extra top padding for buttons */
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            max-height: 500px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #333;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .highlight {
+            background-color: #db2777;
+            color: #fff;
+            padding: 0.1rem 0.4rem;
+            border-radius: 0.3rem;
+            font-weight: 700;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--primary);
+            margin-top: 2rem;
+            font-weight: 600;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            border-radius: 1rem;
+            margin-top: 1.5rem;
+            display: none;
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 350px;
+            color: var(--text-muted);
+            text-align: center;
+            border: 2px dashed var(--border);
+            border-radius: 1rem;
+            margin-top: 1rem;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .tab-btn:hover {
+            background: #f1f5f9;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            background: #faf5ff;
+        }
+
+        .clear-btn {
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            transition: color 0.2s;
+        }
+
+        .clear-btn:hover {
+            color: var(--accent);
+        }
+    </style>
+    <!-- Add Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Fira+Code&display=swap"
+        rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Extractor de Imágenes</h1>
+            <p class="subtitle">Upload images to instantly extract text and data.</p>
+        </header>
+
+        <div class="grid">
+            <!-- Input Section -->
+            <div class="card">
+                <h2>Upload Image</h2>
+                <div class="upload-area" id="drop-zone">
+                    <i class="ph ph-upload-simple" style="font-size: 64px; color: #c4b5fd; margin-bottom: 1rem;"></i>
+                    <p style="font-size: 1.1rem; font-weight: 500;">Drag & drop or Click to upload</p>
+                    <p style="font-size: 0.9rem; color: #9ca3af; margin-top: 0.5rem;">Supports PNG, JPG, JPEG</p>
+                    <input type="file" id="file-input" accept="image/*" class="hidden">
+                </div>
+
+                <img id="preview" class="preview-img" alt="Image Preview">
+
+                <button id="upload-btn" class="btn hidden">
+                    <i class="ph ph-magic-wand" style="margin-right: 0.5rem; vertical-align: middle;"></i> Extract Text
+                </button>
+
+                <div id="loading" class="loading hidden">
+                    <i class="ph ph-spinner animate-spin" style="font-size: 24px; vertical-align: middle;"></i>
+                    <span style="margin-left: 0.5rem;">Processing image...</span>
+                </div>
+
+                <div style="text-align: center;">
+                    <button id="clear-btn" class="clear-btn hidden">Clear and start over</button>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="margin: 0;">Results</h2>
+                    <span id="filename-display" style="font-size: 0.9rem; color: var(--text-muted);"></span>
+                </div>
+
+                <div id="results" class="hidden">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" onclick="showTab('json')">Structured Data</button>
+                        <button class="tab-btn" onclick="showTab('text')">Raw Text</button>
+                    </div>
+
+                    <div id="tab-json" class="output-container">
+                        <div class="output-actions">
+                            <button class="action-btn" onclick="copyToClipboard('json-output')"><i
+                                    class="ph ph-copy"></i> Copy</button>
+                            <button class="action-btn" onclick="downloadData('json')"><i
+                                    class="ph ph-download-simple"></i> JSON</button>
+                        </div>
+                        <pre id="json-output"></pre>
+                    </div>
+
+                    <div id="tab-text" class="output-container hidden">
+                        <div class="output-actions">
+                            <button class="action-btn" onclick="copyToClipboard('text-output')"><i
+                                    class="ph ph-copy"></i> Copy</button>
+                            <button class="action-btn" onclick="downloadData('text')"><i
+                                    class="ph ph-download-simple"></i> TXT</button>
+                        </div>
+                        <pre id="text-output"></pre>
+                    </div>
+                </div>
+
+                <div id="placeholder-text" class="empty-state">
+                    <i class="ph ph-article" style="font-size: 48px; color: #e5e7eb; margin-bottom: 1rem;"></i>
+                    <p>Extracted results will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const preview = document.getElementById('preview');
+        const uploadBtn = document.getElementById('upload-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const placeholder = document.getElementById('placeholder-text');
+        const jsonOutput = document.getElementById('json-output');
+        const textOutput = document.getElementById('text-output');
+        const filenameDisplay = document.getElementById('filename-display');
+
+        let currentFile = null;
+        let lastResult = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFile(file) {
+            currentFile = file;
+            filenameDisplay.textContent = file.name;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                dropZone.classList.add('hidden'); // Hide dropzone to show preview better
+                uploadBtn.classList.remove('hidden');
+                clearBtn.classList.remove('hidden');
+
+                // Should we hide results from prev run?
+                results.classList.add('hidden');
+                placeholder.style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        clearBtn.addEventListener('click', () => {
+            currentFile = null;
+            lastResult = null;
+            fileInput.value = '';
+            preview.src = '';
+            preview.style.display = 'none';
+            dropZone.classList.remove('hidden');
+            uploadBtn.classList.add('hidden');
+            clearBtn.classList.add('hidden');
+            results.classList.add('hidden');
+            placeholder.style.display = 'flex';
+            filenameDisplay.textContent = '';
+        });
+
+        uploadBtn.addEventListener('click', async () => {
+            if (!currentFile) return;
+
+            loading.classList.remove('hidden');
+            uploadBtn.classList.add('hidden');
+            clearBtn.classList.add('hidden');
+
+            const formData = new FormData();
+            formData.append('file', currentFile);
+
+            try {
+                const response = await fetch('/api/ocr', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                loading.classList.add('hidden');
+                clearBtn.classList.remove('hidden');
+
+                if (response.ok) {
+                    lastResult = data;
+                    placeholder.style.display = 'none';
+                    results.classList.remove('hidden');
+
+                    // Highlight "Arpita Mahapatra"
+                    const highlightedName = '<span class="highlight">Arpita Mahapatra</span>';
+
+                    // Format JSON
+                    jsonOutput.textContent = JSON.stringify(data.data, null, 2);
+
+                    // Format Text
+                    let rawText = data.text;
+                    let safeText = rawText
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;");
+
+                    // Simple highlight
+                    safeText = safeText.replace(/Arpita Mahapatra/g, highlightedName);
+
+                    textOutput.innerHTML = safeText;
+                } else {
+                    alert('Error: ' + data.error);
+                    uploadBtn.classList.remove('hidden'); // Allow retry
+                }
+            } catch (error) {
+                console.error(error);
+                loading.classList.add('hidden');
+                uploadBtn.classList.remove('hidden');
+                clearBtn.classList.remove('hidden');
+                alert('An error occurred during upload.');
+            }
+        });
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.tab-btn[onclick="showTab('${tabName}')"]`).classList.add('active');
+
+            if (tabName === 'json') {
+                document.getElementById('tab-json').classList.remove('hidden');
+                document.getElementById('tab-text').classList.add('hidden');
+            } else {
+                document.getElementById('tab-json').classList.add('hidden');
+                document.getElementById('tab-text').classList.remove('hidden');
+            }
+        }
+
+        async function copyToClipboard(elementId) {
+            let text = document.getElementById(elementId).innerText;
+            try {
+                await navigator.clipboard.writeText(text);
+                const btn = document.querySelector(`button[onclick="copyToClipboard('${elementId}')"]`);
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="ph ph-check"></i> Copied!';
+                setTimeout(() => btn.innerHTML = originalHTML, 2000);
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy to clipboard');
+            }
+        }
+
+        function downloadData(type) {
+            if (!lastResult) return;
+
+            let content = '';
+            let filename = 'ocr_result';
+            let mimeType = 'text/plain';
+
+            if (type === 'json') {
+                content = JSON.stringify(lastResult.data, null, 2);
+                filename += '.json';
+                mimeType = 'application/json';
+            } else {
+                content = lastResult.text;
+                filename += '.txt';
+            }
+
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+
+    <style>
+        /* inline spinner animation */
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+
+</body>
+
+</html>
