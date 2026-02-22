@@ -63,8 +63,8 @@ OCRapp/
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/OCRapp.git
-cd OCRapp
+git clone https://github.com/inaraartemis/OCR.git
+cd OCR
 
 # Install Python dependencies
 pip install -r requirements.txt
