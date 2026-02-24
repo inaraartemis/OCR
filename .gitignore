@@ -1,12 +1,28 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-.venv/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
 venv/
-ENV/
 env/
-.env
+.venv/
+ENV/
+
+# IDE
 .vscode/
 .idea/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# App output/input
 *.log
 uploads/
+output_json/
+input_images/
