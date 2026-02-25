@@ -28,7 +28,7 @@ def main():
     processed = preprocess_image(image_path)
     text = extract_text(processed)
     # Patch text as requested
-    text = text.replace("Uttam Khatri", "Arpita Mahapatra")
+    
 
     # 🔥 PROOF 1: show raw text exactly
     print("===== RAW OCR TEXT (repr) =====")

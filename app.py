@@ -38,7 +38,14 @@ def ocr_upload():
         
     if file and allowed_file(file.filename):
         try:
-            print(f"--- Incoming OCR Request: {file.filename} ---")
+            # Get options from request
+            deskew = request.form.get('deskew') == 'true'
+            clahe = request.form.get('clahe') == 'true'
+            sharpen = request.form.get('sharpen') == 'true'
+            language = request.form.get('language', 'eng')
+
+            print(f"--- Incoming OCR Request: {file.filename} (Lang: {language}, Deskew: {deskew}, CLAHE: {clahe}, Sharpen: {sharpen}) ---")
+            
             # Read file to memory
             file_bytes = np.frombuffer(file.read(), np.uint8)
             # Decode image
@@ -46,25 +53,32 @@ def ocr_upload():
             
             if image is None:
                  print("Error: Failed to decode image")
-                 return jsonify({'error': 'Failed to decode image data. Ensure you are uploading a valid image file.'}), 400
+                 return jsonify({'error': 'Failed to decode image data.'}), 400
 
-            # Run OCR pipeline with in-memory image
+            # Run OCR pipeline
             print("Running preprocessing...")
-            processed = preprocess_image(image)
-            print("Extracting text...")
-            text = extract_text(processed)
+            processed, display_image = preprocess_image(image, deskew=deskew, clahe=clahe, sharpen=sharpen)
             
-            # Apply the name patch
+            print("Extracting text...")
+            text = extract_text(processed, lang=language)
+            
+            # Apply name patch
             text = text.replace("Uttam Khatri", "Arpita Mahapatra")
             
             # Parse text
             print("Parsing results...")
             json_data = text_to_json(text)
             
+            # Encode display image for preview
+            _, buffer = cv2.imencode('.jpg', display_image)
+            import base64
+            img_base64 = base64.b64encode(buffer).decode('utf-8')
+
             print("OCR Successful")
             return jsonify({
                 'text': text,
-                'data': json_data
+                'data': json_data,
+                'processed_image': f"data:image/jpeg;base64,{img_base64}"
             })
             
         except Exception as e:

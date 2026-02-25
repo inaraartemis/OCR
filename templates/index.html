@@ -33,24 +33,24 @@
 
         .container {
             width: 100%;
-            max-width: 1200px;
-            padding: 4rem 2rem;
+            max-width: 900px;
+            padding: 2rem 1.5rem;
         }
 
         header {
             text-align: center;
-            margin-bottom: 4rem;
+            margin-bottom: 2rem;
         }
 
         h1 {
-            font-size: 3.5rem;
+            font-size: 2.5rem;
             font-weight: 800;
             margin-bottom: 0.5rem;
             background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -0.03em;
-            text-shadow: 0 20px 40px rgba(236, 72, 153, 0.15);
+            text-shadow: 0 10px 20px rgba(236, 72, 153, 0.1);
         }
 
         p.subtitle {
@@ -62,24 +62,27 @@
         .grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 3rem;
-            align-items: start;
+            gap: 2rem;
+            align-items: stretch;
         }
 
-        @media (min-width: 900px) {
+        @media (min-width: 1024px) {
             .grid {
-                grid-template-columns: 0.8fr 1.2fr;
+                grid-template-columns: 1fr 1fr;
             }
         }
 
         .card {
             background: var(--card-bg);
-            border-radius: 2rem;
-            padding: 2.5rem;
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(243, 232, 255, 0.8);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(243, 232, 255, 0.8);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 380px;
         }
 
         .card:hover {
@@ -319,6 +322,42 @@
                     <i class="ph ph-magic-wand" style="margin-right: 0.5rem; vertical-align: middle;"></i> Extract Text
                 </button>
 
+                <!-- Advanced Settings -->
+                <div id="settings" class="hidden"
+                    style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                    <h3 style="font-size: 1rem; margin-bottom: 1rem;">Optimization Settings</h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label
+                                style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Language</label>
+                            <select id="language-select"
+                                style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); font-family: inherit;">
+                                <option value="eng">English</option>
+                                <option value="hin">Hindi</option>
+                                <option value="spa">Spanish</option>
+                                <option value="fra">French</option>
+                                <option value="deu">German</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                        <label
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+                            <input type="checkbox" id="deskew-check"> Auto-Deskew
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+                            <input type="checkbox" id="clahe-check"> CLAHE (Contrast)
+                        </label>
+                        <label
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+                            <input type="checkbox" id="sharpen-check"> Sharpen
+                        </label>
+                    </div>
+                </div>
+
                 <div id="loading" class="loading hidden">
                     <i class="ph ph-spinner animate-spin" style="font-size: 24px; vertical-align: middle;"></i>
                     <span style="margin-left: 0.5rem;">Processing image...</span>
@@ -340,6 +379,7 @@
                     <div class="tab-buttons">
                         <button class="tab-btn active" onclick="showTab('json')">Structured Data</button>
                         <button class="tab-btn" onclick="showTab('text')">Raw Text</button>
+                        <button class="tab-btn" onclick="showTab('image')">Processed Image</button>
                     </div>
 
                     <div id="tab-json" class="output-container">
@@ -360,6 +400,14 @@
                                     class="ph ph-download-simple"></i> TXT</button>
                         </div>
                         <pre id="text-output"></pre>
+                    </div>
+
+                    <div id="tab-image" class="output-container hidden" style="text-align: center;">
+                        <img id="processed-preview"
+                            style="max-width: 100%; border-radius: 1rem; margin-top: 1rem; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1);"
+                            alt="Processed Image Preview">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">This is how the OCR
+                            engine sees your image after filtering.</p>
                     </div>
                 </div>
 
@@ -383,6 +431,14 @@
         const jsonOutput = document.getElementById('json-output');
         const textOutput = document.getElementById('text-output');
         const filenameDisplay = document.getElementById('filename-display');
+        const processedPreview = document.getElementById('processed-preview');
+        const settings = document.getElementById('settings');
+
+        // Settings inputs
+        const langSelect = document.getElementById('language-select');
+        const deskewCheck = document.getElementById('deskew-check');
+        const claheCheck = document.getElementById('clahe-check');
+        const sharpenCheck = document.getElementById('sharpen-check');
 
         let currentFile = null;
         let lastResult = null;
@@ -420,6 +476,7 @@
                 preview.style.display = 'block';
                 dropZone.classList.add('hidden'); // Hide dropzone to show preview better
                 uploadBtn.classList.remove('hidden');
+                settings.classList.remove('hidden');
                 clearBtn.classList.remove('hidden');
 
                 // Should we hide results from prev run?
@@ -437,6 +494,7 @@
             preview.style.display = 'none';
             dropZone.classList.remove('hidden');
             uploadBtn.classList.add('hidden');
+            settings.classList.add('hidden');
             clearBtn.classList.add('hidden');
             results.classList.add('hidden');
             placeholder.style.display = 'flex';
@@ -452,6 +510,10 @@
 
             const formData = new FormData();
             formData.append('file', currentFile);
+            formData.append('language', langSelect.value);
+            formData.append('deskew', deskewCheck.checked);
+            formData.append('clahe', claheCheck.checked);
+            formData.append('sharpen', sharpenCheck.checked);
 
             try {
                 const response = await fetch('/api/ocr', {
@@ -468,6 +530,11 @@
                     lastResult = data;
                     placeholder.style.display = 'none';
                     results.classList.remove('hidden');
+
+                    // Set processed image
+                    if (data.processed_image) {
+                        processedPreview.src = data.processed_image;
+                    }
 
                     // Highlight "Arpita Mahapatra"
                     const highlightedName = '<span class="highlight">Arpita Mahapatra</span>';
@@ -507,9 +574,15 @@
             if (tabName === 'json') {
                 document.getElementById('tab-json').classList.remove('hidden');
                 document.getElementById('tab-text').classList.add('hidden');
-            } else {
+                document.getElementById('tab-image').classList.add('hidden');
+            } else if (tabName === 'text') {
                 document.getElementById('tab-json').classList.add('hidden');
                 document.getElementById('tab-text').classList.remove('hidden');
+                document.getElementById('tab-image').classList.add('hidden');
+            } else {
+                document.getElementById('tab-json').classList.add('hidden');
+                document.getElementById('tab-text').classList.add('hidden');
+                document.getElementById('tab-image').classList.remove('hidden');
             }
         }
 
